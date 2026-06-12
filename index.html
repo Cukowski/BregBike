@@ -37,7 +37,7 @@
 
     a { color: inherit; text-decoration: none; }
     button, input, select { font: inherit; }
-    button { cursor: pointer; }
+    button { cursor: pointer; touch-action: manipulation; }
     .container { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
 
     .topbar {
@@ -121,6 +121,7 @@
       align-items: center;
       gap: 8px;
       padding: 12px 17px;
+      min-height: 48px;
       border-radius: 999px;
       color: white;
       background: var(--forest);
@@ -358,8 +359,32 @@
     .game-side p { color: var(--muted); line-height: 1.62; margin: 10px 0 0; }
     .key-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 14px; }
     .key { border-radius: 15px; background: rgba(20,61,50,.07); padding: 10px; font-weight: 900; color: var(--forest); text-align: center; }
-    .mobile-controls { display: none; position: absolute; bottom: 14px; right: 14px; gap: 10px; }
-    .mobile-controls button { width: 54px; height: 54px; border-radius: 18px; border: 0; background: rgba(255,255,255,.86); font-weight: 950; color: var(--forest); }
+    .mobile-controls {
+      display: none;
+      position: absolute;
+      right: max(14px, env(safe-area-inset-right));
+      bottom: max(14px, env(safe-area-inset-bottom));
+      z-index: 4;
+      gap: 12px;
+    }
+    .mobile-controls button {
+      width: 64px;
+      height: 64px;
+      border-radius: 20px;
+      border: 0;
+      background: rgba(255,255,255,.9);
+      box-shadow: 0 12px 26px rgba(0,0,0,.2);
+      font-size: 1.4rem;
+      font-weight: 950;
+      color: var(--forest);
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    @media (pointer: coarse) {
+      .mobile-controls { display: flex; }
+      .btn, .nav-links a, input, select { min-height: 48px; }
+      .nav-links a { display: inline-flex; align-items: center; }
+    }
 
     .reviews { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; }
     .review { padding: 20px; }
@@ -379,8 +404,13 @@
       .reviews { grid-template-columns: repeat(2, minmax(0,1fr)); }
     }
     @media (max-width: 720px) {
+      .container { width: min(100% - 24px, 1180px); }
       .nav { align-items: start; flex-direction: column; }
-      .nav-links { justify-content: start; }
+      .brand-mark { width: 56px; height: 56px; border-radius: 18px; }
+      .brand-title { font-size: 1.26rem; }
+      .brand-subtitle { font-size: .92rem; line-height: 1.35; }
+      .nav-links { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; justify-content: stretch; }
+      .nav-links a { justify-content: center; padding: 11px 8px; font-size: .95rem; text-align: center; }
       .hero { padding-top: 36px; }
       .section-head { display: grid; }
       .form-grid, .bike-grid, .reviews { grid-template-columns: 1fr; }
@@ -389,8 +419,34 @@
       .bike-visual { min-height: 128px; }
       .hero-card { min-height: 410px; }
       .booking-badge { grid-template-columns: 1fr; }
-      .mobile-controls { display: flex; }
+      .game-shell { gap: 14px; }
+      .game-side { padding: 22px; gap: 20px; }
+      .game-side .hero-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(112px, .7fr); }
+      .game-side .btn { width: 100%; }
+      .key { min-height: 64px; display: grid; place-items: center; padding: 12px; }
       .hud { bottom: 14px; top: auto; right: auto; flex-direction: column; }
+    }
+    @media (max-width: 720px) and (orientation: landscape) {
+      .topbar { position: static; }
+      section { padding: 34px 0; }
+      .section-head { margin-bottom: 14px; }
+      .game-shell { grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr); align-items: stretch; }
+      canvas { min-height: 260px; }
+      .game-side { padding: 16px; }
+      .game-side p { font-size: .92rem; line-height: 1.45; }
+      .key-grid { margin-top: 10px; }
+      .key { min-height: 52px; padding: 8px; }
+      .mobile-controls button { width: 58px; height: 58px; }
+    }
+    @media (pointer: coarse) and (orientation: landscape) {
+      .topbar { position: static; }
+      .game-shell { grid-template-columns: minmax(0, 1.25fr) minmax(250px, .75fr); align-items: stretch; }
+      canvas { min-height: 260px; }
+      .game-side { padding: 16px; gap: 12px; }
+      .game-side p { font-size: .92rem; line-height: 1.45; }
+      .key-grid { margin-top: 10px; }
+      .key { min-height: 52px; padding: 8px; }
+      .mobile-controls button { width: 58px; height: 58px; }
     }
   </style>
 </head>
@@ -561,7 +617,7 @@
           <div class="card game-panel">
             <canvas id="bikeGame" width="900" height="390" aria-label="BregBike mini bike game"></canvas>
             <div class="hud"><span id="gameScore">Score: 0</span><span id="gameBike">Bike: none</span><span id="gameState">Waiting</span></div>
-            <div class="mobile-controls"><button id="jumpBtn" type="button">↑</button><button id="duckBtn" type="button">↓</button></div>
+            <div class="mobile-controls"><button id="jumpBtn" type="button" aria-label="Jump">↑</button><button id="duckBtn" type="button" aria-label="Duck">↓</button></div>
             <div id="gameOverlay" class="game-overlay">
               <div>
                 <h3>Choose a bike first</h3>
@@ -999,10 +1055,18 @@
       if (e.code === 'Space' || e.code === 'ArrowUp') keys.up = false;
       if (e.code === 'ArrowDown') keys.down = false;
     });
-    document.getElementById('jumpBtn').addEventListener('pointerdown', () => keys.up = true);
-    document.getElementById('jumpBtn').addEventListener('pointerup', () => keys.up = false);
-    document.getElementById('duckBtn').addEventListener('pointerdown', () => keys.down = true);
-    document.getElementById('duckBtn').addEventListener('pointerup', () => keys.down = false);
+    const jumpBtn = document.getElementById('jumpBtn');
+    const duckBtn = document.getElementById('duckBtn');
+    const bindHoldButton = (button, key) => {
+      const start = e => { e.preventDefault(); keys[key] = true; };
+      const stop = e => { e.preventDefault(); keys[key] = false; };
+      button.addEventListener('pointerdown', start);
+      button.addEventListener('pointerup', stop);
+      button.addEventListener('pointercancel', stop);
+      button.addEventListener('pointerleave', stop);
+    };
+    bindHoldButton(jumpBtn, 'up');
+    bindHoldButton(duckBtn, 'down');
 
     document.querySelectorAll('.nav-links a').forEach(link => {
       link.addEventListener('click', () => {
