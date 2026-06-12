@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BregBike — Local Bike Rental in Furtwangen & Freiburg</title>
+  <style>
+    :root {
+      --bg: #f7f4ec;
+      --paper: #fffdf8;
+      --ink: #18221f;
+      --muted: #68756f;
+      --forest: #143d32;
+      --forest-2: #0e2c25;
+      --moss: #6f9d62;
+      --cream: #f5ead8;
+      --sun: #f0b84f;
+      --blue: #437d8f;
+      --line: rgba(24, 34, 31, .12);
+      --shadow: 0 24px 60px rgba(17, 28, 24, .13);
+      --radius: 26px;
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 4%, rgba(111, 157, 98, .18), transparent 31rem),
+        radial-gradient(circle at 88% 12%, rgba(67, 125, 143, .16), transparent 28rem),
+        linear-gradient(180deg, #fbf8ef 0%, #f5efe3 54%, #efe8d9 100%);
+      min-height: 100vh;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .container { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: rgba(255, 253, 248, .82);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(24, 34, 31, .08);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 0;
+      gap: 20px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; min-width: max-content; }
+    .brand-mark {
+      width: 44px; height: 44px; border-radius: 15px;
+      display: grid; place-items: center;
+      color: white; font-weight: 900; letter-spacing: -.03em;
+      background: linear-gradient(145deg, var(--forest), var(--moss));
+      box-shadow: 0 13px 34px rgba(20, 61, 50, .18);
+    }
+    .brand-title { display: block; font-size: 1.06rem; font-weight: 900; letter-spacing: -.02em; }
+    .brand-subtitle { display: block; color: var(--muted); font-size: .78rem; margin-top: 2px; }
+
+    .nav-links { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .nav-links a {
+      color: var(--muted);
+      padding: 9px 12px;
+      border-radius: 999px;
+      font-size: .9rem;
+      font-weight: 700;
+      transition: 160ms ease;
+    }
+    .nav-links a:hover, .nav-links a.active { background: rgba(20, 61, 50, .08); color: var(--forest); }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.02fr .98fr;
+      gap: 36px;
+      align-items: center;
+      padding: 64px 0 34px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(20, 61, 50, .08);
+      border: 1px solid rgba(20, 61, 50, .14);
+      color: var(--forest);
+      font-size: .83rem;
+      font-weight: 900;
+      margin-bottom: 18px;
+    }
+
+    h1, h2, h3 { margin: 0; letter-spacing: -.045em; line-height: 1.02; }
+    h1 { font-size: clamp(2.65rem, 5.8vw, 5.9rem); max-width: 750px; }
+    h2 { font-size: clamp(2rem, 3.4vw, 3.25rem); }
+    h3 { font-size: 1.25rem; }
+    .lead {
+      color: var(--muted);
+      font-size: 1.13rem;
+      line-height: 1.72;
+      max-width: 680px;
+      margin: 22px 0 26px;
+    }
+    .hero-actions, .pill-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+    .btn {
+      border: 0;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 17px;
+      border-radius: 999px;
+      color: white;
+      background: var(--forest);
+      font-weight: 900;
+      box-shadow: 0 14px 34px rgba(20, 61, 50, .18);
+      transition: 160ms ease;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 18px 44px rgba(20, 61, 50, .23); }
+    .btn.secondary { color: var(--forest); background: rgba(20, 61, 50, .08); border: 1px solid rgba(20, 61, 50, .12); box-shadow: none; }
+    .btn.small { padding: 9px 13px; font-size: .88rem; }
+    .btn.disabled, .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 11px;
+      color: var(--muted);
+      background: rgba(255,255,255,.62);
+      border: 1px solid rgba(24, 34, 31, .08);
+      border-radius: 999px;
+      font-size: .86rem;
+      font-weight: 800;
+    }
+    .pill strong { color: var(--forest); }
+
+    .hero-card {
+      position: relative;
+      min-height: 465px;
+      border-radius: 36px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #163f34, #102a25);
+      color: white;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,.18);
+    }
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(240, 184, 79, .28), transparent 18rem),
+        linear-gradient(135deg, rgba(255,255,255,.1), transparent 40%);
+    }
+    .landscape { position: absolute; inset: 0; overflow: hidden; }
+    .sun { position: absolute; width: 88px; height: 88px; border-radius: 50%; background: var(--sun); top: 58px; right: 76px; box-shadow: 0 0 60px rgba(240,184,79,.35); }
+    .hill { position: absolute; left: -8%; width: 116%; height: 270px; border-radius: 50% 50% 0 0; bottom: 90px; background: #255547; opacity: .9; }
+    .hill.two { bottom: 38px; left: -18%; width: 138%; height: 255px; background: #1c4439; }
+    .road { position: absolute; left: -8%; bottom: 0; width: 116%; height: 112px; background: #ece5d7; transform: skewY(-3deg); transform-origin: bottom left; }
+    .road::after { content: ""; position: absolute; left: 0; right: 0; top: 45%; border-top: 5px dashed rgba(24,34,31,.22); }
+    .hero-bike {
+      position: absolute;
+      left: 13%;
+      bottom: 78px;
+      width: 250px;
+      height: 135px;
+      filter: drop-shadow(0 20px 22px rgba(0,0,0,.22));
+    }
+    .bike-svg { display: block; width: 100%; height: 100%; color: currentColor; overflow: visible; }
+    .hero-bike .bike-svg { color: #fff; }
+    .bike-svg .tire,
+    .bike-svg .frame,
+    .bike-svg .detail {
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .bike-svg .tire { stroke-width: 7; }
+    .bike-svg .frame { stroke-width: 6; }
+    .bike-svg .detail { stroke-width: 5; }
+    .booking-badge {
+      position: absolute;
+      left: 26px;
+      right: 26px;
+      bottom: 22px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+      padding: 18px;
+      border-radius: 24px;
+      background: rgba(255,253,248,.94);
+      color: var(--ink);
+      box-shadow: 0 18px 40px rgba(0,0,0,.18);
+    }
+    .booking-badge strong { display: block; font-size: 1.05rem; }
+    .booking-badge span { color: var(--muted); font-size: .88rem; }
+
+    section { padding: 54px 0; }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 24px;
+    }
+    .section-head p { max-width: 520px; color: var(--muted); line-height: 1.65; margin: 0; }
+    .label { color: var(--moss); font-weight: 900; text-transform: uppercase; letter-spacing: .12em; font-size: .78rem; margin-bottom: 8px; }
+
+    .booking-shell {
+      display: grid;
+      gap: 18px;
+    }
+    .search-panel, .card, .summary-panel {
+      background: rgba(255,253,248,.82);
+      border: 1px solid rgba(24,34,31,.1);
+      border-radius: var(--radius);
+      box-shadow: 0 18px 44px rgba(17,28,24,.08);
+    }
+    .search-panel { padding: 18px; }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1.1fr .8fr .8fr .9fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+    label { display: grid; gap: 7px; color: var(--muted); font-size: .82rem; font-weight: 800; }
+    input, select {
+      width: 100%;
+      border: 1px solid rgba(24,34,31,.13);
+      background: rgba(255,255,255,.86);
+      color: var(--ink);
+      padding: 12px 12px;
+      border-radius: 16px;
+      outline: none;
+      min-height: 48px;
+    }
+    input:focus, select:focus { border-color: rgba(20,61,50,.55); box-shadow: 0 0 0 4px rgba(20,61,50,.08); }
+
+    .booking-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 18px;
+      align-items: start;
+    }
+    .results-card { padding: 18px; }
+    .result-toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 14px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .result-toolbar strong { color: var(--ink); font-size: 1.02rem; }
+    .bike-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .bike-card {
+      display: grid;
+      grid-template-columns: 116px 1fr;
+      gap: 14px;
+      padding: 14px;
+      border: 1px solid rgba(24,34,31,.1);
+      border-radius: 22px;
+      background: rgba(255,255,255,.64);
+      transition: 160ms ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .bike-card:hover { transform: translateY(-2px); box-shadow: 0 18px 34px rgba(17,28,24,.09); }
+    .bike-card.selected { outline: 3px solid rgba(20,61,50,.22); border-color: rgba(20,61,50,.32); background: #fffdf8; }
+    .bike-visual {
+      min-height: 116px;
+      border-radius: 18px;
+      background: linear-gradient(145deg, rgba(20,61,50,.1), rgba(111,157,98,.18));
+      display: grid;
+      place-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .bike-visual::before { content: ""; position: absolute; left: -20px; right: -20px; bottom: 8px; height: 32px; border-radius: 50%; background: rgba(20,61,50,.08); }
+    .mini-bike { width: 108px; height: 74px; color: currentColor; }
+    .mini-bike .tire { stroke-width: 5; }
+    .mini-bike .frame { stroke-width: 4; }
+    .mini-bike .detail { stroke-width: 4; }
+    .bike-info { display: grid; gap: 8px; }
+    .bike-top { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
+    .bike-name { font-weight: 950; letter-spacing: -.02em; line-height: 1.1; }
+    .price { color: var(--forest); font-weight: 950; min-width: max-content; }
+    .meta { color: var(--muted); font-size: .88rem; line-height: 1.45; }
+    .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tag { padding: 5px 8px; border-radius: 999px; background: rgba(20,61,50,.07); color: var(--forest); font-size: .75rem; font-weight: 900; }
+    .select-bike { justify-self: start; margin-top: 2px; }
+
+    .summary-panel { position: sticky; top: 92px; padding: 18px; }
+    .summary-panel h3 { margin-bottom: 14px; }
+    .notice {
+      border-radius: 16px;
+      border: 1px solid rgba(20,61,50,.14);
+      background: rgba(20,61,50,.07);
+      color: var(--forest);
+      padding: 12px;
+      line-height: 1.45;
+      font-size: .9rem;
+      margin-bottom: 14px;
+    }
+    .summary-line { display: flex; justify-content: space-between; gap: 18px; padding: 11px 0; border-bottom: 1px solid var(--line); color: var(--muted); }
+    .summary-line strong { color: var(--ink); text-align: right; }
+    .checkbox-row { display: flex; grid-template-columns: auto 1fr; flex-direction: row; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); color: var(--ink); font-size: .9rem; }
+    .checkbox-row input { width: auto; min-height: 0; }
+    .rider-fields { display: grid; gap: 10px; margin: 14px 0; }
+    .total { display: flex; justify-content: space-between; gap: 18px; align-items: center; margin: 16px 0; padding-top: 8px; font-weight: 950; font-size: 1.35rem; }
+    .summary-panel .btn { width: 100%; }
+
+    .game-shell { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 18px; align-items: stretch; }
+    .game-panel { position: relative; padding: 0; overflow: hidden; background: #172d29; color: white; }
+    canvas { display: block; width: 100%; height: auto; min-height: 330px; }
+    .hud {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      top: 14px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      pointer-events: none;
+    }
+    .hud span { background: rgba(0,0,0,.34); backdrop-filter: blur(8px); color: white; padding: 7px 10px; border-radius: 999px; font-weight: 900; font-size: .86rem; }
+    .game-overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      background: rgba(8,20,18,.72);
+      backdrop-filter: blur(5px);
+      padding: 26px;
+    }
+    .game-overlay.hidden { display: none; }
+    .game-overlay h3 { color: white; font-size: 2rem; margin-bottom: 8px; }
+    .game-overlay p { color: rgba(255,255,255,.78); max-width: 460px; line-height: 1.6; margin: 0 auto 18px; }
+    .game-side { padding: 20px; display: flex; flex-direction: column; justify-content: space-between; gap: 18px; }
+    .game-side p { color: var(--muted); line-height: 1.62; margin: 10px 0 0; }
+    .key-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 14px; }
+    .key { border-radius: 15px; background: rgba(20,61,50,.07); padding: 10px; font-weight: 900; color: var(--forest); text-align: center; }
+    .mobile-controls { display: none; position: absolute; bottom: 14px; right: 14px; gap: 10px; }
+    .mobile-controls button { width: 54px; height: 54px; border-radius: 18px; border: 0; background: rgba(255,255,255,.86); font-weight: 950; color: var(--forest); }
+
+    .reviews { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; }
+    .review { padding: 20px; }
+    .stars { color: #bd7b10; font-weight: 950; letter-spacing: .03em; margin-bottom: 12px; }
+    .review p { color: var(--muted); line-height: 1.62; margin: 0 0 16px; }
+    .review strong { display: block; }
+    .review span { color: var(--muted); font-size: .86rem; }
+
+    footer { padding: 32px 0 46px; color: var(--muted); }
+    .footer-inner { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 22px; }
+
+    @media (max-width: 1060px) {
+      .hero, .booking-body, .game-shell { grid-template-columns: 1fr; }
+      .summary-panel { position: static; }
+      .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .form-grid .btn { grid-column: span 2; }
+      .reviews { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    @media (max-width: 720px) {
+      .nav { align-items: start; flex-direction: column; }
+      .nav-links { justify-content: start; }
+      .hero { padding-top: 36px; }
+      .section-head { display: grid; }
+      .form-grid, .bike-grid, .reviews { grid-template-columns: 1fr; }
+      .form-grid .btn { grid-column: auto; }
+      .bike-card { grid-template-columns: 1fr; }
+      .bike-visual { min-height: 128px; }
+      .hero-card { min-height: 410px; }
+      .booking-badge { grid-template-columns: 1fr; }
+      .mobile-controls { display: flex; }
+      .hud { bottom: 14px; top: auto; right: auto; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container nav">
+      <a class="brand" href="#home" aria-label="BregBike home">
+        <span class="brand-mark">BB</span>
+        <span>
+          <span class="brand-title">BregBike</span>
+          <span class="brand-subtitle">Furtwangen · Freiburg · Black Forest</span>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="#rent">Rent</a>
+        <a href="#game">Bike Game</a>
+        <a href="#reviews">Reviews</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="home">
+    <div class="container hero">
+      <div>
+        <div class="eyebrow">Local peer-to-peer bike rental</div>
+        <h1>Rent a bike from the Black Forest, not from a faceless garage.</h1>
+        <p class="lead">BregBike connects riders with privately owned city bikes, mountain bikes, cargo bikes, gravel bikes and e-bikes around Furtwangen and Freiburg. Choose your dates, pickup point and bike type, then reserve in a few clicks.</p>
+        <div class="hero-actions">
+          <a class="btn" href="#rent">Find a bike</a>
+          <a class="btn secondary" href="#game">Try the mini-game</a>
+        </div>
+        <div class="pill-row" style="margin-top:18px">
+          <span class="pill"><strong>20</strong> local bikes</span>
+          <span class="pill"><strong>6</strong> pickup areas</span>
+          <span class="pill"><strong>From €9</strong> per day</span>
+        </div>
+      </div>
+
+      <div class="hero-card" aria-hidden="true">
+        <div class="landscape">
+          <div class="sun"></div>
+          <div class="hill"></div>
+          <div class="hill two"></div>
+          <div class="road"></div>
+          <div class="hero-bike">
+            <svg class="bike-svg" viewBox="0 0 250 135" aria-hidden="true">
+              <circle class="tire" cx="54" cy="94" r="36"></circle>
+              <circle class="tire" cx="185" cy="94" r="36"></circle>
+              <path class="frame" d="M54 94 L112 91 L96 47 L154 50 L112 91 M96 47 L54 94 M154 50 L185 94 M112 91 L166 68"></path>
+              <path class="detail" d="M96 47 L89 31 M75 31 L112 31 M154 50 L166 68 L185 94 M154 50 L169 35 M169 35 L213 27"></path>
+              <circle class="detail" cx="112" cy="91" r="5"></circle>
+            </svg>
+          </div>
+        </div>
+        <div class="booking-badge">
+          <div>
+            <strong>Furtwangen Campus → Freiburg Hbf</strong>
+            <span>E-bike selected · helmet optional · pickup instructions by email</span>
+          </div>
+          <a class="btn small" href="#rent">Book</a>
+        </div>
+      </div>
+    </div>
+
+    <section id="rent">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <div class="label">Rent</div>
+            <h2>Search, select, reserve.</h2>
+          </div>
+          <p>A clean rental flow: location, dates, bike type, price, extras and booking confirmation. The site stays customer-facing; project diagrams belong in the presentation.</p>
+        </div>
+
+        <div class="booking-shell">
+          <div class="search-panel">
+            <form id="searchForm" class="form-grid">
+              <label>Pickup location
+                <select id="location">
+                  <option value="all">Any local pickup</option>
+                  <option>Furtwangen Campus</option>
+                  <option>Furtwangen Marktplatz</option>
+                  <option>Freiburg Hbf</option>
+                  <option>Freiburg Altstadt</option>
+                  <option>Titisee Bahnhof</option>
+                  <option>Villingen Bahnhof</option>
+                </select>
+              </label>
+              <label>Return location
+                <select id="returnLocation">
+                  <option value="Same as pickup">Same as pickup</option>
+                  <option>Furtwangen Campus</option>
+                  <option>Freiburg Hbf</option>
+                  <option>Titisee Bahnhof</option>
+                  <option>Villingen Bahnhof</option>
+                </select>
+              </label>
+              <label>Pickup date
+                <input id="pickupDate" type="date" required />
+              </label>
+              <label>Return date
+                <input id="returnDate" type="date" required />
+              </label>
+              <label>Bike type
+                <select id="bikeType">
+                  <option value="all">All bikes</option>
+                  <option>City</option>
+                  <option>E-bike</option>
+                  <option>Mountain</option>
+                  <option>Gravel</option>
+                  <option>Cargo</option>
+                </select>
+              </label>
+              <button class="btn" type="submit">Search</button>
+            </form>
+          </div>
+
+          <div class="booking-body">
+            <div class="card results-card">
+              <div class="result-toolbar">
+                <strong id="resultCount">20 bikes available</strong>
+                <span id="dateHint">Choose dates to calculate your total.</span>
+              </div>
+              <div id="bikeGrid" class="bike-grid" aria-live="polite"></div>
+            </div>
+
+            <aside class="summary-panel" aria-label="Booking summary">
+              <h3>Your reservation</h3>
+              <div id="selectedBikeBox" class="notice">Select a bike to unlock the booking summary and mini-game.</div>
+              <div class="summary-line"><span>Bike</span><strong id="sumBike">—</strong></div>
+              <div class="summary-line"><span>Dates</span><strong id="sumDates">—</strong></div>
+              <div class="summary-line"><span>Pickup</span><strong id="sumPickup">—</strong></div>
+              <div class="summary-line"><span>Rental days</span><strong id="sumDays">—</strong></div>
+
+              <label class="checkbox-row"><input type="checkbox" id="extraHelmet" /> <span>Helmet + repair kit · €4/day</span></label>
+              <label class="checkbox-row"><input type="checkbox" id="extraInsurance" /> <span>Theft and damage protection · €6/day</span></label>
+              <label class="checkbox-row"><input type="checkbox" id="extraDelivery" /> <span>Local handover delivery · €9 once</span></label>
+
+              <div class="rider-fields">
+                <label>Your name
+                  <input id="riderName" placeholder="e.g. Selcuk Aksoy" />
+                </label>
+                <label>Email for confirmation
+                  <input id="riderEmail" type="email" placeholder="name@example.com" />
+                </label>
+              </div>
+
+              <div class="total"><span>Total</span><span id="sumTotal">€0</span></div>
+              <button id="reserveBtn" class="btn disabled" disabled type="button">Reserve bike</button>
+              <div id="bookingResult" class="notice" style="display:none; margin-top:14px"></div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="game">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <div class="label">Bike Game</div>
+            <h2>Test-ride your selected bike.</h2>
+          </div>
+          <p>After selecting a bike, the page unlocks a small Flash-style game. It is playful, but still connected to the rental: the selected bike changes the name, color, speed and handling.</p>
+        </div>
+
+        <div class="game-shell">
+          <div class="card game-panel">
+            <canvas id="bikeGame" width="900" height="390" aria-label="BregBike mini bike game"></canvas>
+            <div class="hud"><span id="gameScore">Score: 0</span><span id="gameBike">Bike: none</span><span id="gameState">Waiting</span></div>
+            <div class="mobile-controls"><button id="jumpBtn" type="button">↑</button><button id="duckBtn" type="button">↓</button></div>
+            <div id="gameOverlay" class="game-overlay">
+              <div>
+                <h3>Choose a bike first</h3>
+                <p>The mini-game starts after you select a bike from the rental list.</p>
+                <a class="btn" href="#rent">Go to bikes</a>
+              </div>
+            </div>
+          </div>
+          <div class="card game-side">
+            <div>
+              <h3>Black Forest Sprint</h3>
+              <p>Collect coins, avoid cones and ride from Furtwangen toward Freiburg. Space or ↑ jumps. ↓ ducks under branches.</p>
+              <div class="key-grid">
+                <div class="key">Space / ↑<br>Jump</div>
+                <div class="key">↓<br>Duck</div>
+              </div>
+            </div>
+            <div class="hero-actions">
+              <button id="startGameBtn" class="btn disabled" disabled type="button">Start game</button>
+              <button id="resetGameBtn" class="btn secondary" type="button">Reset</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="reviews">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <div class="label">Reviews</div>
+            <h2>Previous riders.</h2>
+          </div>
+          <p>Fictional customer reviews for the prototype, written like a real rental homepage: short, local and believable.</p>
+        </div>
+        <div class="reviews">
+          <article class="card review">
+            <div class="stars">★★★★★</div>
+            <p>“Picked up an e-bike near HFU and rode to Titisee. The handover was simple and the battery was more than enough.”</p>
+            <strong>Lea M.</strong><span>Furtwangen Campus</span>
+          </article>
+          <article class="card review">
+            <div class="stars">★★★★★</div>
+            <p>“Much easier than finding a shop on a Sunday. The Freiburg pickup point was clear and the bike felt well maintained.”</p>
+            <strong>Jonas K.</strong><span>Freiburg Hbf</span>
+          </article>
+          <article class="card review">
+            <div class="stars">★★★★☆</div>
+            <p>“Used a cargo bike for groceries in Freiburg. I liked seeing the total price before confirming the reservation.”</p>
+            <strong>Marta S.</strong><span>Freiburg Altstadt</span>
+          </article>
+          <article class="card review">
+            <div class="stars">★★★★★</div>
+            <p>“The mountain bike was perfect for a short Black Forest trail ride. The little game after booking was a strange but fun detail.”</p>
+            <strong>Emre A.</strong><span>Furtwangen Marktplatz</span>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-inner">
+      <span>© 2026 BregBike — prototype rental website</span>
+      <span>Furtwangen · Freiburg · Schwarzwald</span>
+    </div>
+  </footer>
+
+  <script>
+    const bikes = [
+      { id: 1, name: "Breg Climber", type: "Mountain", location: "Furtwangen Campus", price: 18, rating: 4.9, owner: "Mira", features: ["Trail", "Hydraulic brakes", "27 gears"], color: "#2f6f4e", speed: 5.5, handling: 0.92 },
+      { id: 2, name: "Campus Cruiser", type: "City", location: "Furtwangen Campus", price: 9, rating: 4.7, owner: "Tom", features: ["Basket", "Lock", "Comfort seat"], color: "#437d8f", speed: 4.6, handling: 1.06 },
+      { id: 3, name: "Clockmaker E-Flow", type: "E-bike", location: "Furtwangen Marktplatz", price: 27, rating: 4.8, owner: "Nina", features: ["80 km battery", "Lights", "Phone mount"], color: "#7d5c36", speed: 6.2, handling: 0.96 },
+      { id: 4, name: "Snowline MTB", type: "Mountain", location: "Furtwangen Marktplatz", price: 21, rating: 4.8, owner: "Lukas", features: ["Wide tires", "Suspension", "Trail bell"], color: "#324c66", speed: 5.7, handling: 0.9 },
+      { id: 5, name: "Black Forest Gravel", type: "Gravel", location: "Furtwangen Campus", price: 22, rating: 4.9, owner: "Hanna", features: ["Fast road", "Light frame", "Bottle holder"], color: "#6f4e7c", speed: 6.0, handling: 0.98 },
+      { id: 6, name: "Breg Cargo Fox", type: "Cargo", location: "Furtwangen Marktplatz", price: 24, rating: 4.6, owner: "Ozan", features: ["Cargo box", "Child seat", "Stable stand"], color: "#b07528", speed: 4.2, handling: 0.78 },
+      { id: 7, name: "Dreisam City", type: "City", location: "Freiburg Hbf", price: 12, rating: 4.8, owner: "Clara", features: ["Basket", "Easy gears", "City lock"], color: "#35715f", speed: 4.8, handling: 1.08 },
+      { id: 8, name: "Münster Cruiser", type: "City", location: "Freiburg Altstadt", price: 11, rating: 4.7, owner: "Paul", features: ["Upright riding", "Bell", "Rear rack"], color: "#a85f45", speed: 4.7, handling: 1.1 },
+      { id: 9, name: "Vauban E-Glide", type: "E-bike", location: "Freiburg Altstadt", price: 29, rating: 4.9, owner: "Sofia", features: ["90 km battery", "Quiet motor", "Pannier"], color: "#345f8a", speed: 6.4, handling: 0.94 },
+      { id: 10, name: "Schauinsland Climber", type: "Mountain", location: "Freiburg Hbf", price: 25, rating: 4.9, owner: "Ben", features: ["Steep climbs", "Disc brakes", "Trail tires"], color: "#355b39", speed: 5.9, handling: 0.88 },
+      { id: 11, name: "Green Loop Cargo", type: "Cargo", location: "Freiburg Altstadt", price: 26, rating: 4.8, owner: "Jana", features: ["Two child seats", "Rain cover", "Large box"], color: "#6b7d2e", speed: 4.1, handling: 0.75 },
+      { id: 12, name: "Höllental Gravel", type: "Gravel", location: "Freiburg Hbf", price: 24, rating: 4.8, owner: "Felix", features: ["Fast tires", "Lightweight", "Long distance"], color: "#4b6175", speed: 6.1, handling: 0.97 },
+      { id: 13, name: "Titisee Breeze", type: "City", location: "Titisee Bahnhof", price: 13, rating: 4.6, owner: "Anja", features: ["Lake route", "Basket", "Step-through"], color: "#498f9a", speed: 4.6, handling: 1.1 },
+      { id: 14, name: "Lake Battery", type: "E-bike", location: "Titisee Bahnhof", price: 31, rating: 4.9, owner: "Robin", features: ["100 km battery", "Hill assist", "Helmet included"], color: "#6a8550", speed: 6.5, handling: 0.93 },
+      { id: 15, name: "Villingen Classic", type: "City", location: "Villingen Bahnhof", price: 10, rating: 4.5, owner: "Laura", features: ["Simple gears", "Rear rack", "Low frame"], color: "#886342", speed: 4.5, handling: 1.05 },
+      { id: 16, name: "Brigach Gravel", type: "Gravel", location: "Villingen Bahnhof", price: 20, rating: 4.7, owner: "Deniz", features: ["Mixed roads", "Fast frame", "Repair pouch"], color: "#3f6970", speed: 5.8, handling: 0.99 },
+      { id: 17, name: "Forest Commuter", type: "E-bike", location: "Furtwangen Campus", price: 25, rating: 4.8, owner: "Elias", features: ["Daily commute", "Battery lights", "Lock"], color: "#536d3f", speed: 6.1, handling: 0.96 },
+      { id: 18, name: "Kandel Trail", type: "Mountain", location: "Freiburg Hbf", price: 23, rating: 4.7, owner: "Marlene", features: ["Trail tires", "Light frame", "Bottle holder"], color: "#7a4738", speed: 5.6, handling: 0.91 },
+      { id: 19, name: "Altstadt Shopper", type: "Cargo", location: "Freiburg Altstadt", price: 22, rating: 4.6, owner: "Amin", features: ["Shopping box", "Stable", "Low speed"], color: "#997b32", speed: 4.0, handling: 0.8 },
+      { id: 20, name: "Misty Morning", type: "Gravel", location: "Furtwangen Marktplatz", price: 19, rating: 4.8, owner: "Greta", features: ["Lightweight", "Fast route", "Rain guards"], color: "#5d6670", speed: 5.9, handling: 1.0 }
+    ];
+
+    const els = {
+      grid: document.getElementById('bikeGrid'),
+      resultCount: document.getElementById('resultCount'),
+      dateHint: document.getElementById('dateHint'),
+      location: document.getElementById('location'),
+      returnLocation: document.getElementById('returnLocation'),
+      pickupDate: document.getElementById('pickupDate'),
+      returnDate: document.getElementById('returnDate'),
+      bikeType: document.getElementById('bikeType'),
+      selectedBikeBox: document.getElementById('selectedBikeBox'),
+      sumBike: document.getElementById('sumBike'),
+      sumDates: document.getElementById('sumDates'),
+      sumPickup: document.getElementById('sumPickup'),
+      sumDays: document.getElementById('sumDays'),
+      extraHelmet: document.getElementById('extraHelmet'),
+      extraInsurance: document.getElementById('extraInsurance'),
+      extraDelivery: document.getElementById('extraDelivery'),
+      riderName: document.getElementById('riderName'),
+      riderEmail: document.getElementById('riderEmail'),
+      total: document.getElementById('sumTotal'),
+      reserveBtn: document.getElementById('reserveBtn'),
+      bookingResult: document.getElementById('bookingResult'),
+      startGameBtn: document.getElementById('startGameBtn'),
+      resetGameBtn: document.getElementById('resetGameBtn'),
+      gameOverlay: document.getElementById('gameOverlay'),
+      gameScore: document.getElementById('gameScore'),
+      gameBike: document.getElementById('gameBike'),
+      gameState: document.getElementById('gameState')
+    };
+
+    const today = new Date();
+    const tomorrow = new Date(); tomorrow.setDate(today.getDate() + 1);
+    const nextDay = new Date(); nextDay.setDate(today.getDate() + 2);
+    const fmtDate = d => d.toISOString().slice(0,10);
+    els.pickupDate.value = fmtDate(tomorrow);
+    els.returnDate.value = fmtDate(nextDay);
+    els.pickupDate.min = fmtDate(today);
+    els.returnDate.min = fmtDate(tomorrow);
+
+    let selectedBike = null;
+    let currentList = [...bikes];
+
+    function getDays() {
+      const start = new Date(els.pickupDate.value);
+      const end = new Date(els.returnDate.value);
+      const diff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+      return Number.isFinite(diff) ? Math.max(1, diff) : 1;
+    }
+
+    function money(n) { return '€' + n.toFixed(0); }
+    function prettyDate(value) {
+      if (!value) return '—';
+      return new Date(value + 'T12:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    }
+
+    function renderBikeIcon(color) {
+      return `<svg class="bike-svg mini-bike" style="color:${color}" viewBox="0 0 120 82" aria-hidden="true">
+        <circle class="tire" cx="30" cy="58" r="20"></circle>
+        <circle class="tire" cx="91" cy="58" r="20"></circle>
+        <path class="frame" d="M30 58 L57 57 L50 29 L77 31 L57 57 M50 29 L30 58 M77 31 L91 58 M57 57 L82 42"></path>
+        <path class="detail" d="M50 29 L46 19 M37 19 L56 19 M77 31 L82 42 L91 58 M77 31 L85 22 M85 22 L104 18"></path>
+        <circle class="detail" cx="57" cy="57" r="3"></circle>
+      </svg>`;
+    }
+
+    function renderBikes(list) {
+      currentList = list;
+      els.resultCount.textContent = `${list.length} bike${list.length === 1 ? '' : 's'} available`;
+      els.dateHint.textContent = `${getDays()} rental day${getDays() === 1 ? '' : 's'} selected.`;
+      els.grid.innerHTML = list.map(bike => `
+        <article class="bike-card ${selectedBike && selectedBike.id === bike.id ? 'selected' : ''}" data-id="${bike.id}">
+          <div class="bike-visual">${renderBikeIcon(bike.color)}</div>
+          <div class="bike-info">
+            <div class="bike-top">
+              <div>
+                <div class="bike-name">${bike.name}</div>
+                <div class="meta">${bike.type} · ${bike.location} · ★ ${bike.rating} · Owner: ${bike.owner}</div>
+              </div>
+              <div class="price">${money(bike.price)}/day</div>
+            </div>
+            <div class="tags">${bike.features.map(f => `<span class="tag">${f}</span>`).join('')}</div>
+            <button class="btn small secondary select-bike" type="button">Select bike</button>
+          </div>
+        </article>
+      `).join('') || `<div class="notice">No bikes match this search. Try another location or bike type.</div>`;
+    }
+
+    function applyFilters() {
+      const loc = els.location.value;
+      const type = els.bikeType.value;
+      const list = bikes.filter(b => (loc === 'all' || b.location === loc) && (type === 'all' || b.type === type));
+      renderBikes(list);
+      updateSummary();
+    }
+
+    function updateSummary() {
+      const days = getDays();
+      if (new Date(els.returnDate.value) <= new Date(els.pickupDate.value)) {
+        const adjusted = new Date(els.pickupDate.value);
+        adjusted.setDate(adjusted.getDate() + 1);
+        els.returnDate.value = fmtDate(adjusted);
+      }
+      if (!selectedBike) {
+        els.sumBike.textContent = '—';
+        els.sumDates.textContent = '—';
+        els.sumPickup.textContent = '—';
+        els.sumDays.textContent = '—';
+        els.total.textContent = '€0';
+        els.reserveBtn.disabled = true;
+        els.reserveBtn.classList.add('disabled');
+        return;
+      }
+
+      const extras =
+        (els.extraHelmet.checked ? 4 * days : 0) +
+        (els.extraInsurance.checked ? 6 * days : 0) +
+        (els.extraDelivery.checked ? 9 : 0);
+      const total = selectedBike.price * days + extras;
+      const returnText = els.returnLocation.value === 'Same as pickup' ? selectedBike.location : els.returnLocation.value;
+      els.selectedBikeBox.textContent = `${selectedBike.name} selected. The mini-game now uses this bike.`;
+      els.sumBike.textContent = `${selectedBike.name} (${selectedBike.type})`;
+      els.sumDates.textContent = `${prettyDate(els.pickupDate.value)} → ${prettyDate(els.returnDate.value)}`;
+      els.sumPickup.textContent = `${selectedBike.location} → ${returnText}`;
+      els.sumDays.textContent = `${days}`;
+      els.total.textContent = money(total);
+      els.reserveBtn.disabled = false;
+      els.reserveBtn.classList.remove('disabled');
+      els.startGameBtn.disabled = false;
+      els.startGameBtn.classList.remove('disabled');
+      els.gameOverlay.classList.add('hidden');
+      els.gameBike.textContent = `Bike: ${selectedBike.name}`;
+    }
+
+    document.getElementById('searchForm').addEventListener('submit', e => { e.preventDefault(); applyFilters(); });
+    [els.location, els.bikeType, els.pickupDate, els.returnDate, els.returnLocation, els.extraHelmet, els.extraInsurance, els.extraDelivery].forEach(el => {
+      el.addEventListener('change', () => { applyFilters(); updateSummary(); });
+    });
+
+    els.grid.addEventListener('click', e => {
+      const card = e.target.closest('.bike-card');
+      if (!card) return;
+      selectedBike = bikes.find(b => b.id === Number(card.dataset.id));
+      renderBikes(currentList);
+      updateSummary();
+      drawGame();
+    });
+
+    els.reserveBtn.addEventListener('click', () => {
+      if (!selectedBike) return;
+      const name = els.riderName.value.trim();
+      const email = els.riderEmail.value.trim();
+      if (!name || !email) {
+        els.bookingResult.style.display = 'block';
+        els.bookingResult.textContent = 'Please enter your name and email before reserving.';
+        return;
+      }
+      const code = 'BB-' + Math.random().toString(36).slice(2, 6).toUpperCase() + '-' + selectedBike.id;
+      els.bookingResult.style.display = 'block';
+      els.bookingResult.innerHTML = `<strong>Reservation confirmed.</strong><br>${code} was sent to ${email}. Pickup instructions for ${selectedBike.location} will arrive shortly.`;
+    });
+
+    const canvas = document.getElementById('bikeGame');
+    const ctx = canvas.getContext('2d');
+    let game = null;
+    let keys = { up: false, down: false };
+
+    function newGame() {
+      const bike = selectedBike || bikes[0];
+      return {
+        running: false,
+        over: false,
+        score: 0,
+        t: 0,
+        speed: bike.speed,
+        player: { x: 130, y: 284, vy: 0, w: 82, h: 48, duck: false },
+        obstacles: [],
+        coins: [],
+        nextObstacle: 80,
+        nextCoin: 45,
+        bike
+      };
+    }
+
+    function drawBike(x, y, color, duck=false) {
+      const scaleY = duck ? .72 : 1;
+      const tireColor = '#1d2925';
+      const riderColor = '#f0b84f';
+      const skinColor = '#f3c49a';
+      ctx.save();
+      ctx.translate(x, y + (duck ? 14 : 0));
+      ctx.scale(1, scaleY);
+      ctx.lineCap = 'round';
+
+      ctx.strokeStyle = tireColor;
+      ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(20, 44, 17, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(86, 44, 17, 0, Math.PI * 2); ctx.stroke();
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(20, 44); ctx.lineTo(49, 43); ctx.lineTo(40, 18); ctx.lineTo(69, 20); ctx.lineTo(49, 43);
+      ctx.moveTo(40, 18); ctx.lineTo(20, 44);
+      ctx.moveTo(69, 20); ctx.lineTo(86, 44);
+      ctx.moveTo(49, 43); ctx.lineTo(77, 31);
+      ctx.stroke();
+
+      ctx.beginPath(); ctx.moveTo(40, 18); ctx.lineTo(36, 8); ctx.lineTo(25, 8); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(69, 20); ctx.lineTo(77, 31); ctx.lineTo(86, 44); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(69, 20); ctx.lineTo(78, 10); ctx.lineTo(99, 7); ctx.stroke();
+      ctx.beginPath(); ctx.arc(49, 43, 3, 0, Math.PI * 2); ctx.stroke();
+
+      ctx.strokeStyle = riderColor;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(45, 3); ctx.lineTo(40, 18);
+      ctx.moveTo(44, 7); ctx.lineTo(66, 20);
+      ctx.moveTo(40, 18); ctx.lineTo(49, 43);
+      ctx.moveTo(40, 18); ctx.lineTo(63, 41);
+      ctx.stroke();
+
+      ctx.fillStyle = skinColor;
+      ctx.beginPath(); ctx.arc(48, -8, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+
+    function drawBackground() {
+      const w = canvas.width, h = canvas.height;
+      const grd = ctx.createLinearGradient(0,0,0,h);
+      grd.addColorStop(0, '#a8d0c5'); grd.addColorStop(.56, '#d9e3d0'); grd.addColorStop(1, '#efe4d3');
+      ctx.fillStyle = grd; ctx.fillRect(0,0,w,h);
+      ctx.fillStyle = '#f2bd5b'; ctx.beginPath(); ctx.arc(760, 70, 42, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#73966b';
+      ctx.beginPath(); ctx.moveTo(0,238); ctx.quadraticCurveTo(170,150,335,230); ctx.quadraticCurveTo(535,126,760,224); ctx.quadraticCurveTo(850,180,900,205); ctx.lineTo(900,390); ctx.lineTo(0,390); ctx.fill();
+      ctx.fillStyle = '#416e5b';
+      ctx.beginPath(); ctx.moveTo(0,280); ctx.quadraticCurveTo(210,205,390,276); ctx.quadraticCurveTo(540,215,710,277); ctx.quadraticCurveTo(815,237,900,260); ctx.lineTo(900,390); ctx.lineTo(0,390); ctx.fill();
+      ctx.fillStyle = '#3a3630'; ctx.fillRect(0, 315, w, 75);
+      ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 5; ctx.setLineDash([26, 22]);
+      ctx.beginPath(); ctx.moveTo(0, 352); ctx.lineTo(w, 352); ctx.stroke(); ctx.setLineDash([]);
+    }
+
+    function rectsOverlap(a,b) {
+      return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    }
+
+    function updateGame() {
+      if (!game || !game.running || game.over) return;
+      game.t++;
+      const p = game.player;
+      p.duck = keys.down;
+      if (keys.up && p.y >= 284) { p.vy = -13 * game.bike.handling; }
+      p.vy += .62;
+      p.y += p.vy;
+      if (p.y > 284) { p.y = 284; p.vy = 0; }
+
+      game.nextObstacle--;
+      if (game.nextObstacle <= 0) {
+        const branch = Math.random() < .34;
+        game.obstacles.push({ x: 930, y: branch ? 252 : 292, w: branch ? 58 : 34, h: branch ? 18 : 34, branch });
+        game.nextObstacle = 65 + Math.random() * 72;
+      }
+      game.nextCoin--;
+      if (game.nextCoin <= 0) {
+        game.coins.push({ x: 930, y: 230 + Math.random() * 60, w: 18, h: 18, taken: false });
+        game.nextCoin = 38 + Math.random() * 60;
+      }
+
+      const move = game.speed + game.score / 260;
+      game.obstacles.forEach(o => o.x -= move);
+      game.coins.forEach(c => c.x -= move);
+      game.obstacles = game.obstacles.filter(o => o.x > -80);
+      game.coins = game.coins.filter(c => c.x > -40 && !c.taken);
+
+      const playerBox = p.duck
+        ? { x: p.x + 8, y: p.y + 4, w: 92, h: 38 }
+        : { x: p.x + 8, y: p.y - 20, w: 94, h: 62 };
+      for (const o of game.obstacles) {
+        if (rectsOverlap(playerBox, o)) {
+          game.over = true; game.running = false;
+          els.gameState.textContent = 'Crashed';
+        }
+      }
+      for (const c of game.coins) {
+        if (rectsOverlap(playerBox, c)) { c.taken = true; game.score += 25; }
+      }
+      game.score += .1;
+      els.gameScore.textContent = `Score: ${Math.floor(game.score)}`;
+    }
+
+    function drawGame() {
+      drawBackground();
+      const bike = selectedBike || (game && game.bike) || bikes[0];
+      if (game) {
+        game.obstacles.forEach(o => {
+          ctx.fillStyle = o.branch ? '#5b3a22' : '#d36b35';
+          if (o.branch) { ctx.fillRect(o.x, o.y, o.w, o.h); }
+          else { ctx.beginPath(); ctx.moveTo(o.x, o.y + o.h); ctx.lineTo(o.x + o.w / 2, o.y); ctx.lineTo(o.x + o.w, o.y + o.h); ctx.closePath(); ctx.fill(); }
+        });
+        game.coins.forEach(c => { ctx.fillStyle = '#f0b84f'; ctx.beginPath(); ctx.arc(c.x + 9, c.y + 9, 9, 0, Math.PI*2); ctx.fill(); });
+        drawBike(game.player.x, game.player.y - 20, bike.color, game.player.duck);
+        if (game.over) {
+          ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+          ctx.fillStyle = 'white'; ctx.font = '900 42px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Crash in the Black Forest', canvas.width/2, 165);
+          ctx.font = '700 18px Inter, sans-serif'; ctx.fillText('Press Start Game or "space" button to try again.', canvas.width/2, 202);
+        }
+      } else {
+        drawBike(130, 264, bike.color, false);
+      }
+    }
+
+    function loop() { updateGame(); drawGame(); requestAnimationFrame(loop); }
+    loop();
+
+    function startGame() {
+      if (!selectedBike) return;
+      game = newGame();
+      game.running = true;
+      els.gameScore.textContent = 'Score: 0';
+      els.gameState.textContent = 'Riding';
+      els.gameBike.textContent = `Bike: ${selectedBike.name}`;
+    }
+
+    els.startGameBtn.addEventListener('click', startGame);
+    els.resetGameBtn.addEventListener('click', () => {
+      game = selectedBike ? newGame() : null;
+      els.gameState.textContent = selectedBike ? 'Ready' : 'Waiting';
+      els.gameScore.textContent = 'Score: 0';
+      drawGame();
+    });
+    window.addEventListener('keydown', e => {
+      if (['Space','ArrowUp','ArrowDown'].includes(e.code)) e.preventDefault();
+      if (e.code === 'Space') {
+        if (!game || game.over || !game.running) {
+          if (!e.repeat) startGame();
+          return;
+        }
+        keys.up = true;
+      }
+      if (e.code === 'ArrowUp') keys.up = true;
+      if (e.code === 'ArrowDown') keys.down = true;
+    });
+    window.addEventListener('keyup', e => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') keys.up = false;
+      if (e.code === 'ArrowDown') keys.down = false;
+    });
+    document.getElementById('jumpBtn').addEventListener('pointerdown', () => keys.up = true);
+    document.getElementById('jumpBtn').addEventListener('pointerup', () => keys.up = false);
+    document.getElementById('duckBtn').addEventListener('pointerdown', () => keys.down = true);
+    document.getElementById('duckBtn').addEventListener('pointerup', () => keys.down = false);
+
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      link.addEventListener('click', () => {
+        document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+        link.classList.add('active');
+      });
+    });
+
+    applyFilters();
+    drawGame();
+  </script>
+</body>
+</html>
