@@ -387,7 +387,29 @@
       -webkit-tap-highlight-color: transparent;
     }
     @media (pointer: coarse) {
-      .mobile-controls { display: flex; }
+      .hud {
+        position: static;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 6px;
+        padding: 8px max(10px, env(safe-area-inset-right)) 8px max(10px, env(safe-area-inset-left));
+        background: #172d29;
+      }
+      .hud span {
+        min-width: 0;
+        overflow: hidden;
+        padding: 6px 8px;
+        border-radius: 8px;
+        font-size: .76rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .hud #gameBike { text-align: center; }
+      .mobile-controls {
+        display: flex;
+        bottom: calc(62px + env(safe-area-inset-bottom));
+      }
       .btn, .nav-links a, input, select { min-height: 48px; }
       .nav-links a { display: inline-flex; align-items: center; }
     }
@@ -430,7 +452,14 @@
       .game-side .hero-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(112px, .7fr); }
       .game-side .btn { width: 100%; }
       .key { min-height: 64px; display: grid; place-items: center; padding: 12px; }
-      .hud { bottom: 14px; top: auto; right: auto; flex-direction: column; }
+      .hud {
+        top: 10px;
+        right: 10px;
+        bottom: auto;
+        left: 10px;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+      }
     }
     @media (max-width: 720px) and (orientation: landscape) {
       .topbar { position: static; }
@@ -881,6 +910,47 @@
     const ctx = canvas.getContext('2d');
     let game = null;
     let keys = { up: false, down: false };
+    let audioContext = null;
+
+    function ensureAudio() {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return null;
+      if (!audioContext) audioContext = new AudioContext();
+      if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
+      return audioContext;
+    }
+
+    function playTone(startFrequency, endFrequency, duration, volume, type = 'sine', delay = 0) {
+      const audio = ensureAudio();
+      if (!audio || audio.state === 'closed') return;
+
+      const start = audio.currentTime + delay;
+      const oscillator = audio.createOscillator();
+      const gain = audio.createGain();
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(startFrequency, start);
+      oscillator.frequency.exponentialRampToValueAtTime(endFrequency, start + duration);
+      gain.gain.setValueAtTime(.0001, start);
+      gain.gain.exponentialRampToValueAtTime(volume, start + .012);
+      gain.gain.exponentialRampToValueAtTime(.0001, start + duration);
+      oscillator.connect(gain);
+      gain.connect(audio.destination);
+      oscillator.start(start);
+      oscillator.stop(start + duration + .02);
+    }
+
+    function playJumpSound() {
+      playTone(280, 520, .14, .045, 'triangle');
+    }
+
+    function playDuckSound() {
+      playTone(180, 105, .11, .035, 'sine');
+    }
+
+    function playGameOverSound() {
+      playTone(210, 95, .32, .05, 'triangle');
+      playTone(145, 70, .3, .035, 'sine', .12);
+    }
 
     function newGame() {
       const bike = selectedBike || bikes[0];
@@ -966,7 +1036,10 @@
       game.t++;
       const p = game.player;
       p.duck = keys.down;
-      if (keys.up && p.y >= 284) { p.vy = -13 * game.bike.handling; }
+      if (keys.up && p.y >= 284) {
+        p.vy = -13 * game.bike.handling;
+        playJumpSound();
+      }
       p.vy += .62;
       p.y += p.vy;
       if (p.y > 284) { p.y = 284; p.vy = 0; }
@@ -996,6 +1069,8 @@
         if (rectsOverlap(playerBox, o)) {
           game.over = true; game.running = false;
           els.gameState.textContent = 'Crashed';
+          playGameOverSound();
+          break;
         }
       }
       for (const c of game.coins) {
@@ -1026,11 +1101,28 @@
       }
     }
 
-    function loop() { updateGame(); drawGame(); requestAnimationFrame(loop); }
-    loop();
+    const GAME_STEP_MS = 1000 / 60;
+    let lastFrameTime = performance.now();
+    let gameAccumulator = 0;
+
+    function loop(frameTime) {
+      const elapsed = Math.min(frameTime - lastFrameTime, GAME_STEP_MS * 5);
+      lastFrameTime = frameTime;
+      gameAccumulator += elapsed;
+
+      while (gameAccumulator >= GAME_STEP_MS) {
+        updateGame();
+        gameAccumulator -= GAME_STEP_MS;
+      }
+
+      drawGame();
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
 
     function startGame() {
       if (!selectedBike) return;
+      ensureAudio();
       game = newGame();
       game.running = true;
       els.gameScore.textContent = 'Score: 0';
@@ -1047,6 +1139,7 @@
     });
     window.addEventListener('keydown', e => {
       if (['Space','ArrowUp','ArrowDown'].includes(e.code)) e.preventDefault();
+      if (['Space','ArrowUp','ArrowDown'].includes(e.code)) ensureAudio();
       if (e.code === 'Space') {
         if (!game || game.over || !game.running) {
           if (!e.repeat) startGame();
@@ -1055,7 +1148,10 @@
         keys.up = true;
       }
       if (e.code === 'ArrowUp') keys.up = true;
-      if (e.code === 'ArrowDown') keys.down = true;
+      if (e.code === 'ArrowDown') {
+        if (!keys.down && game && game.running && !game.over) playDuckSound();
+        keys.down = true;
+      }
     });
     window.addEventListener('keyup', e => {
       if (e.code === 'Space' || e.code === 'ArrowUp') keys.up = false;
@@ -1063,8 +1159,13 @@
     });
     const jumpBtn = document.getElementById('jumpBtn');
     const duckBtn = document.getElementById('duckBtn');
-    const bindHoldButton = (button, key) => {
-      const start = e => { e.preventDefault(); keys[key] = true; };
+    const bindHoldButton = (button, key, onPress) => {
+      const start = e => {
+        e.preventDefault();
+        ensureAudio();
+        if (!keys[key] && onPress) onPress();
+        keys[key] = true;
+      };
       const stop = e => { e.preventDefault(); keys[key] = false; };
       button.addEventListener('pointerdown', start);
       button.addEventListener('pointerup', stop);
@@ -1073,7 +1174,9 @@
       button.addEventListener('contextmenu', e => e.preventDefault());
     };
     bindHoldButton(jumpBtn, 'up');
-    bindHoldButton(duckBtn, 'down');
+    bindHoldButton(duckBtn, 'down', () => {
+      if (game && game.running && !game.over) playDuckSound();
+    });
 
     document.querySelectorAll('.nav-links a').forEach(link => {
       link.addEventListener('click', () => {
